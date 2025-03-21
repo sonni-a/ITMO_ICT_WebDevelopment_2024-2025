@@ -16,7 +16,7 @@
     
     
       
-        <title>Lab2 urls - Документация лабораторных работ WEB Мельник Софья</title>
+        <title>Lab2 models - Документация лабораторных работ WEB Мельник Софья</title>
       
     
     
@@ -89,7 +89,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Lab2 urls
+              Lab2 models
             
           </span>
         </div>
@@ -326,31 +326,44 @@
                   
 
 
-  <h1>Lab2 urls</h1>
+  <h1>Lab2 models</h1>
 
-<pre><code>urlpatterns = [
-    path('', main, name='main'),
-    path('register/', register, name='register'),
-    path('login/', user_login, name='login'),
-    path('account/', account_view, name='account'),
-    path('logout/', logout_view, name='logout'),
+<pre><code>from django.db import models
+from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
-    #Homeworks
-    path('homeworks/submit/&lt;int:homework_id&gt;/', submit_homework, name='submit_homework'),
-    path('homeworks/', homework_list, name='homework_list'),
-    path('homeworks/add/', add_homework, name='add_homework'),
-    path('homeworks/edit/&lt;int:homework_id&gt;/', edit_homework, name='edit_homework'),
-    path('homeworks/delete/&lt;int:homework_id&gt;/', delete_homework, name='delete_homework'),
 
-    #Submissions
-    path('submissions/', submission_list, name='submission_list'),
-    path('submissions/student/', student_submission_list, name='student_submission_list'),
-    path('submissions/edit/&lt;int:submission_id&gt;/', edit_submission, name='edit_submission'),
-    path('submissions/delete/&lt;int:submission_id&gt;/', delete_submission, name='delete_submission'),
+class User(AbstractUser):
+    class Role(models.TextChoices):
+        STUDENT = "student", "Student"
+        TEACHER = "teacher", "Teacher"
 
-    path('submission/grade/&lt;int:submission_id&gt;/', grade_submission, name='grade_submission'),
-    path('grades/', student_grade_table, name='student_grade_table'),
-]
+    role = models.CharField(max_length=20, choices=Role.choices, default=Role.STUDENT)
+
+
+class Homework(models.Model):
+    subject = models.CharField(max_length=100)
+    teacher = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={"role": "teacher"}
+    )
+    assigned_date = models.DateField()
+    due_date = models.DateField()
+    description = models.TextField()
+    penalties_info = models.TextField(blank=True, null=True)
+
+    objects = models.Manager()
+
+
+class Submission(models.Model):
+    homework = models.ForeignKey(Homework, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, limit_choices_to={"role": "student"}
+    )
+    submission_text = models.TextField()
+    submission_date = models.DateField(auto_now_add=True)
+    grade = models.IntegerField(blank=True, null=True)
+
+    objects = models.Manager()
 </code></pre>
 
 
